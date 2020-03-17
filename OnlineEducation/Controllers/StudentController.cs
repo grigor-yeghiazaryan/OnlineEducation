@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using OnlineEducation.DTO;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using OnlineEducation.DAL.Entities;
 using OnlineEducation.BLL.Interfaces;
@@ -20,7 +21,6 @@ namespace OnlineEducation.Controllers
         public async Task<IActionResult> Get(int groupId)
         {
             var users = await _studentService.Get(x => x.GroupId == groupId);
-            users.ForEach(c => c.Password = null);
             return Ok(users);
         }
 
@@ -28,7 +28,9 @@ namespace OnlineEducation.Controllers
         public async Task<IActionResult> Get(int groupId, int id)
         {
             var user = await _studentService.Get(id);
-            user.Password = null;
+            if (user.GroupId != groupId)
+                return NotFound();
+
             return Ok(user);
         }
 
@@ -41,17 +43,31 @@ namespace OnlineEducation.Controllers
             return base.Ok(model);
         }
 
-        [HttpPost("{id}")]
-        public async Task<IActionResult> Edit(int groupId, long id, [FromBody] Student model)
+        [HttpPost("ChangePassword")]
+        public async Task<IActionResult> ChangePassword(int groupId, int id, [FromBody] StudentChangePasswordModel model)
         {
-            model.GroupId = groupId;
+            if (model.NewPassword != model.ConfirmPassword)
+                return BadRequest();
 
-            var user = await _studentService.Get(id);
-            if (user == null)
+            var student = await _studentService.Get(id);
+
+            if (student == null || student.GroupId != groupId)
                 return NotFound();
 
-            if (string.IsNullOrWhiteSpace(model.Password))
-                model.Password = user.Password;
+            student.Password = model.NewPassword;
+
+            var data = await _studentService.Update(student);
+
+            return base.Ok(data);
+        }
+
+        [HttpPost("{id}")]
+        public async Task<IActionResult> Edit(int groupId, int id, [FromBody] Student model)
+        {
+            var student = await _studentService.Get(id);
+
+            if (student == null || student.GroupId != groupId)
+                return NotFound();
 
             model = await _studentService.Update(model);
 

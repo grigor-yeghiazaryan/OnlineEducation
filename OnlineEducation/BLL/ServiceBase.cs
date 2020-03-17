@@ -21,14 +21,14 @@ namespace OnlineEducation.BLL
             _dbSet = _db.Set<TEntity>();
         }
 
-        public virtual async Task<bool> Any(long id)
+        public virtual async Task<bool> Any(int id)
         {
             return await _dbSet.AnyAsync(x => x.Id == id);
         }
 
-        public virtual async Task<long> Count()
+        public virtual async Task<int> Count()
         {
-            return await _dbSet.LongCountAsync();
+            return await _dbSet.CountAsync();
         }
 
         public virtual async Task<TEntity> Add(TEntity newModel)
@@ -39,7 +39,7 @@ namespace OnlineEducation.BLL
             return newEntity;
         }
 
-        public virtual async Task<TEntity> Get(long id)
+        public virtual async Task<TEntity> Get(int id)
         {
             var entity = await _dbSet.FindAsync(id);
             return entity;
@@ -47,7 +47,7 @@ namespace OnlineEducation.BLL
 
         public virtual async Task<FilterResult<TEntity>> Get(Expression<Func<TEntity, bool>> expression, int start, int count)
         {
-            var allCount = await _dbSet.LongCountAsync(expression);
+            var allCount = await _dbSet.CountAsync(expression);
 
             var query = _dbSet
                 .Where(expression)
@@ -67,7 +67,7 @@ namespace OnlineEducation.BLL
             return entityList;
         }
 
-        public virtual async Task Remove(long id)
+        public virtual async Task Remove(int id)
         {
             var entity = await _dbSet.FindAsync(id);
             _ = _dbSet.Remove(entity);
@@ -76,9 +76,7 @@ namespace OnlineEducation.BLL
 
         public virtual async Task<TEntity> Update(TEntity newModel)
         {
-            var entity = await _dbSet.FindAsync(newModel.Id);
-
-            var data = _dbSet.Update(entity);
+            var data = _dbSet.Update(newModel);
             await _db.SaveChangesAsync();
 
             var updatedEntity = data.Entity;
@@ -92,9 +90,9 @@ namespace OnlineEducation.BLL
             return entityList;
         }
 
-        public virtual async Task<long> Count(Expression<Func<TEntity, bool>> expression)
+        public virtual async Task<int> Count(Expression<Func<TEntity, bool>> expression)
         {
-            return await _dbSet.LongCountAsync(expression);
+            return await _dbSet.CountAsync(expression);
         }
 
         public virtual async Task<bool> Any(Expression<Func<TEntity, bool>> expression)
