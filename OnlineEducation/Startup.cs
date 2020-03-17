@@ -26,6 +26,12 @@ namespace OnlineEducation
         {
             services.AddCors();
             services.AddControllers();
+                //.AddJsonOptions(
+                //    options =>
+                //    {
+                //        options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+                //        options.JsonSerializerOptions.PropertyNamingPolicy = null;
+                //    });
 
             // configure strongly typed settings objects
             var appSettingsSection = Configuration.GetSection("AppSettings");

@@ -14,10 +14,19 @@ namespace OnlineEducation.DAL
                 entity.HasKey(e => e.Id);
             });
 
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.Student).WithOne(c => c.User)
+                    .HasForeignKey<Student>(b => b.UserId);
+            });
+
             modelBuilder.Entity<Student>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.HasOne(e => e.Group).WithMany(c => c.Students);
+                entity.HasOne(e => e.User).WithOne(c => c.Student)
+                    .HasForeignKey<User>(b => b.StudentId);
             });
 
             modelBuilder.Entity<Item>(entity =>
@@ -40,6 +49,7 @@ namespace OnlineEducation.DAL
         }
 
         public virtual DbSet<Group> Groups { get; set; }
+        public virtual DbSet<User> Users { get; set; }
         public virtual DbSet<Student> Students { get; set; }
         public virtual DbSet<ItemLesson> ItemLessons { get; set; }
         public virtual DbSet<ItemGroup> ItemGroups { get; set; }

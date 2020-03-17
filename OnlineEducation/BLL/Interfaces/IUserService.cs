@@ -1,10 +1,10 @@
 ﻿using OnlineEducation.DAL.Entities;
-using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace OnlineEducation.BLL.Interfaces
 {
-    public interface IUserService
+    public interface IUserService : IServiceBase<User>
     {
-        User Authenticate(string username, string password);
+        Task<User> Authenticate(string email, string password);
     }
 }

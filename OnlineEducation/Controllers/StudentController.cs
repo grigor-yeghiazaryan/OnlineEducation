@@ -35,7 +35,7 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Add(int groupId, [FromBody] Student model)
+        public async Task<IActionResult> Add(int groupId, [FromBody] StudentModel model)
         {
             model.GroupId = groupId;
             model = await _studentService.Add(model);
@@ -62,7 +62,7 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpPost("{id}")]
-        public async Task<IActionResult> Edit(int groupId, int id, [FromBody] Student model)
+        public async Task<IActionResult> Edit(int groupId, int id, [FromBody] StudentModel model)
         {
             var student = await _studentService.Get(id);
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using OnlineEducation.DAL;
 using OnlineEducation.Common;
 using System.Threading.Tasks;
@@ -6,80 +7,94 @@ using System.Linq.Expressions;
 using System.Collections.Generic;
 using OnlineEducation.DAL.Entities;
 using OnlineEducation.BLL.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace OnlineEducation.BLL.Services
 {
-    public class StudentService : ServiceBase<Student>, IStudentService
+    public class StudentService : ServiceBase<StudentModel>, IStudentService
     {
-        public StudentService(OnlineEducationDbContext dbContext) : base(dbContext) { }
+        private readonly IUserService _userService;
 
-        public override async Task<Student> Add(Student newModel)
+        public StudentService(OnlineEducationDbContext dbContext, IUserService userService) : base(dbContext)
         {
-            newModel.Password = Encrypt(newModel.Password);
-
-            return await base.Add(newModel);
+            this._userService = userService;
         }
 
-        public override async Task<Student> Get(int id)
+        public override async Task<StudentModel> Add(StudentModel newModel)
         {
-            var data = await base.Get(id);
-            data.Password = null;
-            return data;
+            var user = newModel.GetUser();
+            var newUser = await _userService.Add(user);
+
+            newModel.UserId = newUser.Id;
+            var newStudent = await base.Add(newModel);
+
+            var studentModel = new StudentModel(newUser.WithoutPassword(), newStudent);
+            return studentModel;
         }
 
-        public override async Task<FilterResult<Student>> Get(Expression<Func<Student, bool>> expression, int start, int count)
+        public override async Task<StudentModel> Get(int id)
         {
-            var data = await base.Get(expression, start, count);
+            var student = await _dbSet
+               .Where(x=>x.Id == id)
+               .Include(x => x.User)
+               .SingleOrDefaultAsync();
 
-            foreach (var item in data.Data)
-            {
-                item.Password = null;
-            }
-
-            return data;
+            return new StudentModel(student.User.WithoutPassword(), student);
         }
 
-        public override async Task<List<Student>> GetAll()
+        public override async Task<FilterResult<StudentModel>> Get(Expression<Func<StudentModel, bool>> expression, int start, int count)
         {
-            var data = await base.GetAll();
-            data.ForEach(x => x.Password = null);
-            return data;
+            var allCount = await _dbSet.CountAsync(expression);
+
+            var query = _dbSet
+                .Where(expression)
+                .Include(x=>x.User)
+                .OrderByDescending(x => x.Id)
+                .Skip(start).Take(count);
+
+            var entityList = await query.ToListAsync();
+
+            var studentModelList = entityList.Select(x=> new StudentModel(x.User.WithoutPassword(), x));
+
+            var filterResult = new FilterResult<StudentModel> { Data = studentModelList, ItemsCount = allCount };
+
+            return filterResult;
         }
 
-        public virtual async Task<List<Student>> Get(Expression<Func<Student, bool>> expression)
+        public override async Task<List<StudentModel>> GetAll()
         {
-            var data = await base.Get(expression);
-            data.ForEach(x => x.Password = null);
-            return data;
+            var query = _dbSet.Include(x => x.User);
+
+            var entityList = await query.ToListAsync();
+
+            var studentModelList = entityList.Select(x => new StudentModel(x.User.WithoutPassword(), x)).ToList();
+
+            return studentModelList;
         }
 
-        public override async Task<Student> Update(Student newModel)
+        public override async Task<List<StudentModel>> Get(Expression<Func<StudentModel, bool>> expression)
         {
-            if (string.IsNullOrWhiteSpace(newModel.Password))
-            {
-                var student = await _dbSet.FindAsync(newModel.Id);
-                if (student == null)
-                    return null;
-                newModel.Password = student.Password;
-            }
-            else
-            {
-                newModel.Password = Encrypt(newModel.Password);
-            }
+            var query = _dbSet
+                .Where(expression)
+                .Include(x => x.User);
 
-            var data = await base.Update(newModel);
-            return data;
+            var entityList = await query.ToListAsync();
+
+            var studentModelList = entityList.Select(x => new StudentModel(x.User.WithoutPassword(), x)).ToList();
+
+            return studentModelList;
         }
 
-        private string Encrypt(string inputString)
+        public override async Task<StudentModel> Update(StudentModel newModel)
         {
-            if (string.IsNullOrWhiteSpace(inputString))
-                return null;
+            var user = newModel.GetUser();
+            var newUser = await _userService.Update(user);
 
-            byte[] data = System.Text.Encoding.ASCII.GetBytes(inputString);
-            data = new System.Security.Cryptography.SHA256Managed().ComputeHash(data);
-            var hash = System.Text.Encoding.ASCII.GetString(data);
-            return hash;
+            newModel.UserId = newUser.Id;
+            var newStudent = await base.Update(newModel);
+
+            var studentModel = new StudentModel(newUser, newStudent);
+            return studentModel;
         }
     }
 }
