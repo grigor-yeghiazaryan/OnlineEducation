@@ -12,6 +12,7 @@ using Microsoft.Extensions.Options;
 using OnlineEducation.BLL.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using Microsoft.EntityFrameworkCore;
 
 namespace OnlineEducation.BLL.Services
 {
@@ -85,13 +86,15 @@ namespace OnlineEducation.BLL.Services
         public async Task<User> Authenticate(string email, string password)
         {
             var pass = Encryptor.Encrypt(password);
-            var data = await base.Get(x => x.Email == email && x.Password == pass);
-            var user = data.SingleOrDefault();
+            var user = await _dbSet.Where(x => x.Email == email && x.Password == pass)
+                    .Include(x => x.Student).FirstOrDefaultAsync();
+
+            var student = await _db.Students.FirstOrDefaultAsync(x => x.UserId == user.Id);
 
             if (user == null)
                 return null;
 
-            var role = user.StudentId == null ? ClaimType.Professor : ClaimType.Student;
+            var role = student == null ? ClaimType.Professor : ClaimType.Student;
 
             // authentication successful so generate jwt token
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -101,7 +104,7 @@ namespace OnlineEducation.BLL.Services
                 Subject = new ClaimsIdentity(new Claim[]
                 {
                     new Claim(ClaimTypes.Name, user.Id.ToString()),
-                    new Claim("StudentId", user.StudentId.ToString()),
+                    new Claim("StudentId", student.Id.ToString()),
                     new Claim(ClaimTypes.Role, role.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddDays(7),

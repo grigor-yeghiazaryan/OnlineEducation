@@ -5,11 +5,13 @@ using OnlineEducation.Common;
 using Microsoft.AspNetCore.Mvc;
 using OnlineEducation.DAL.Entities;
 using OnlineEducation.BLL.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace OnlineEducation.Controllers
 {
     [Produces("application/json")]
     [Route("api/Groups/{groupId}/Items")]
+    [Authorize(Roles = "Professor")]
     public class GroupItemController : Controller
     {
         private readonly IItemGroupService _itemGroupService;
@@ -24,7 +26,6 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpGet]
-        [AuthorizeUser(ClaimType.Student, ClaimType.Professor)]
         public async Task<IActionResult> Get(int groupId)
         {
             var data = await _itemGroupService.Get(x => x.GroupId == groupId);
@@ -32,7 +33,6 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpPost]
-        [AuthorizeUser(ClaimType.Professor)]
         public async Task<IActionResult> Add(int groupId, [FromBody] AddItemsInGroupModel model)
         {
             if (model == null)
@@ -53,7 +53,6 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpDelete("{id}")]
-        [AuthorizeUser(ClaimType.Professor)]
         public async Task<IActionResult> Remove(int groupId, int id)
         {
             var data = await _itemGroupService.Get(x => x.GroupId == groupId && x.ItemId == id);

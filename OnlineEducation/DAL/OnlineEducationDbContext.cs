@@ -26,8 +26,6 @@ namespace OnlineEducation.DAL
             {
                 entity.HasKey(e => e.Id);
                 entity.HasOne(e => e.Group).WithMany(c => c.Students);
-                entity.HasOne(e => e.User).WithOne(c => c.Student)
-                    .HasForeignKey<User>(b => b.StudentId);
             });
 
             modelBuilder.Entity<Item>(entity =>

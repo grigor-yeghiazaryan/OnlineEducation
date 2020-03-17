@@ -1,13 +1,15 @@
 ﻿using System.Threading.Tasks;
+using OnlineEducation.Common;
 using Microsoft.AspNetCore.Mvc;
 using OnlineEducation.DAL.Entities;
 using OnlineEducation.BLL.Interfaces;
-using OnlineEducation.Common;
+using Microsoft.AspNetCore.Authorization;
 
 namespace OnlineEducation.Controllers
 {
     [Produces("application/json")]
     [Route("api/Groups")]
+    [Authorize(Roles = "Professor")]
     public class GroupController : Controller
     {
         private readonly IGroupService _groupService;
@@ -18,7 +20,6 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpGet]
-        [AuthorizeUser(ClaimType.Student, ClaimType.Professor)]
         public async Task<IActionResult> Get()
         {
             var data = await _groupService.GetAll();
@@ -26,7 +27,6 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpGet("{id}")]
-        [AuthorizeUser(ClaimType.Student, ClaimType.Professor)]
         public async Task<IActionResult> Get(int id)
         {
             var data = await _groupService.Get(id);
@@ -34,7 +34,6 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpPost]
-        [AuthorizeUser(ClaimType.Professor)]
         public async Task<IActionResult> Add([FromBody] Group model)
         {
             var data = await _groupService.Add(model);
@@ -43,7 +42,6 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpPost("{id}")]
-        [AuthorizeUser(ClaimType.Professor)]
         public async Task<IActionResult> Edit(int id, [FromBody] Group model)
         {
             var data = await _groupService.Get(id);
@@ -56,7 +54,6 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpDelete("{id}")]
-        [AuthorizeUser(ClaimType.Professor)]
         public async Task<IActionResult> Remove(int id)
         {
             var data = await _groupService.Get(id);

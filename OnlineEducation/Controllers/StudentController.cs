@@ -1,14 +1,15 @@
 ﻿using OnlineEducation.DTO;
 using System.Threading.Tasks;
-using OnlineEducation.Common;
 using Microsoft.AspNetCore.Mvc;
 using OnlineEducation.DAL.Entities;
 using OnlineEducation.BLL.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 
 namespace OnlineEducation.Controllers
 {
     [Produces("application/json")]
     [Route("api/Group/{groupId}/Students")]
+    [Authorize(Roles = "Professor")]
     public class StudentController : Controller
     {
         private readonly IStudentService _studentService;
@@ -19,7 +20,6 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpGet]
-        [AuthorizeUser(ClaimType.Student, ClaimType.Professor)]
         public async Task<IActionResult> Get(int groupId)
         {
             var users = await _studentService.Get(x => x.GroupId == groupId);
@@ -27,7 +27,6 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpGet("{id}")]
-        [AuthorizeUser(ClaimType.Student, ClaimType.Professor)]
         public async Task<IActionResult> Get(int groupId, int id)
         {
             var user = await _studentService.Get(id);
@@ -38,8 +37,7 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpPost]
-        [AuthorizeUser(ClaimType.Professor)]
-        public async Task<IActionResult> Add(int groupId, [FromBody] StudentModel model)
+        public async Task<IActionResult> Add(int groupId, [FromBody] Student model)
         {
             model.GroupId = groupId;
             model = await _studentService.Add(model);
@@ -48,7 +46,6 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpPost("ChangePassword")]
-        [AuthorizeUser(ClaimType.Student, ClaimType.Professor)]
         public async Task<IActionResult> ChangePassword(int groupId, int id, [FromBody] StudentChangePasswordModel model)
         {
             if (model.NewPassword != model.ConfirmPassword)
@@ -59,7 +56,7 @@ namespace OnlineEducation.Controllers
             if (student == null || student.GroupId != groupId)
                 return NotFound();
 
-            student.Password = model.NewPassword;
+            student.User.Password = model.NewPassword;
 
             var data = await _studentService.Update(student);
 
@@ -67,7 +64,6 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpPost("{id}")]
-        [AuthorizeUser(ClaimType.Student, ClaimType.Professor)]
         public async Task<IActionResult> Edit(int groupId, int id, [FromBody] StudentModel model)
         {
             var student = await _studentService.Get(id);
@@ -75,13 +71,12 @@ namespace OnlineEducation.Controllers
             if (student == null || student.GroupId != groupId)
                 return NotFound();
 
-            model = await _studentService.Update(model);
+            var result = await _studentService.Update(model);
 
-            return base.Ok(model);
+            return base.Ok(result);
         }
 
         [HttpDelete("{id}")]
-        [AuthorizeUser(ClaimType.Professor)]
         public async Task<IActionResult> Remove(int groupId, int id)
         {
             var user = await _studentService.Get(id);

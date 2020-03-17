@@ -37,6 +37,10 @@ namespace OnlineEducation
                                  .RequireAuthenticatedUser()
                                  .Build();
                 config.Filters.Add(new AuthorizeFilter(policy));
+            })
+            .AddNewtonsoftJson(options =>
+            {
+                options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
             });
 
             // configure strongly typed settings objects
@@ -83,6 +87,7 @@ namespace OnlineEducation
                 });
             });
 
+            //services.AddScoped<ClaimRequirementFilter>();
             services.ConfigureServices();
         }
 
@@ -106,14 +111,12 @@ namespace OnlineEducation
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
-
-#if DEBUG
                 // For Debug in Kestrel
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "OnlineEducation API V1");
-#else
-   // To deploy on IIS
-   c.SwaggerEndpoint("/webapi/swagger/v1/swagger.json", "Web API V1");
-#endif
+
+                // To deploy on IIS
+                // c.SwaggerEndpoint("/webapi/swagger/v1/swagger.json", "Web API V1");
+        
                 c.RoutePrefix = string.Empty;
             });
 

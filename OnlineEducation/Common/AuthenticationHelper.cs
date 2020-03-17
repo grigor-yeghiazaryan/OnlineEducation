@@ -7,39 +7,46 @@ namespace OnlineEducation.Common
 {
     public class AuthorizeUserAttribute : TypeFilterAttribute
     {
-        public AuthorizeUserAttribute(params ClaimType[] claimValue) : base(typeof(ClaimRequirementFilter))
+        public AuthorizeUserAttribute(params ClaimType[] claimType) : base(typeof(AuthorizeRoleFilter))
         {
-            var arguments = claimValue.Select(x => new Claim(ClaimTypes.Role, x.ToString()));
-
-            Arguments = arguments.ToArray();
+            string permission = string.Join(",", claimType);
+            Arguments = new object[] { new Claim(ClaimTypes.Role, permission) };
         }
 
-        public AuthorizeUserAttribute(string claimType, string claimValue) : base(typeof(ClaimRequirementFilter))
+        public AuthorizeUserAttribute(string permission, ClaimType type) : base(typeof(AuthorizeRoleFilter))
         {
-            Arguments = new object[] { new Claim(claimType, claimValue) };
+            var typeStr = type.ToString();
+            Arguments = new object[] { new Claim(typeStr, permission) };
         }
     }
 
-    public class ClaimRequirementFilter : IAuthorizationFilter
+    public class AuthorizeRoleFilter : IAuthorizationFilter
     {
         readonly Claim _claim;
 
-        public ClaimRequirementFilter(Claim claim)
+        public AuthorizeRoleFilter(Claim claim)
         {
             _claim = claim;
         }
 
         public void OnAuthorization(AuthorizationFilterContext context)
         {
-            var hasClaim = context.HttpContext.User.Claims.Any(c => c.Type == _claim.Type && c.Value == _claim.Value);
-            if (!hasClaim)
+            return;
+            var claim = context.HttpContext.User.Claims.FirstOrDefault(c => c.Type == _claim.Value);
+            if (claim == null)
             {
                 context.Result = new ForbidResult();
+            }
+            else
+            {
+                var claims = claim.Value.Split(',');
+                //var organizationId = context.RouteData.Values["organizationId"]?.ToString();
+                //  if(claims.Contains())
             }
         }
     }
 
-    public enum ClaimType : int
+    public enum ClaimType
     {
         Student,
         Professor
