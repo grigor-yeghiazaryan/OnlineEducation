@@ -39,7 +39,7 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpPost("{id}")]
-        public async Task<IActionResult> Edit(long id, [FromBody] Item model)
+        public async Task<IActionResult> Edit(int id, [FromBody] Item model)
         {
             var data = await _itemService.Get(id);
             if (data == null)

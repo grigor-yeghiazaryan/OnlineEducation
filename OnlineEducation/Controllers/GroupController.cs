@@ -39,7 +39,7 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpPost("{id}")]
-        public async Task<IActionResult> Edit(long id, [FromBody] Group model)
+        public async Task<IActionResult> Edit(int id, [FromBody] Group model)
         {
             var data = await _groupService.Get(id);
             if (data == null)

@@ -1,8 +1,7 @@
 using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,15 +10,11 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using OnlineEducation.Common;
 using OnlineEducation.DAL;
-using Swashbuckle.AspNetCore.Swagger;
 
 namespace OnlineEducation
 {
     public class Startup
     {
-        private const string SecretKey = "0n1!ne3ducat!0n";
-        private readonly SymmetricSecurityKey _signingKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(SecretKey));
-
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -29,7 +24,33 @@ namespace OnlineEducation
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc();
+            services.AddCors();
+            services.AddControllers();
+
+            // configure strongly typed settings objects
+            var appSettingsSection = Configuration.GetSection("AppSettings");
+            services.Configure<AppSettings>(appSettingsSection);
+
+            // configure jwt authentication
+            var appSettings = appSettingsSection.Get<AppSettings>();
+            var key = Encoding.ASCII.GetBytes(appSettings.Secret);
+            services.AddAuthentication(x =>
+            {
+                x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(x =>
+            {
+                x.RequireHttpsMetadata = false;
+                x.SaveToken = true;
+                x.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = false,
+                    ValidateAudience = false
+                };
+            });
 
             services.AddDbContext<OnlineEducationDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("OnlineEducationDatabase")));
@@ -55,6 +76,21 @@ namespace OnlineEducation
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseRouting();
+
+            // global cors policy
+            app.UseCors(x => x
+                .AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader());
+
+            app.UseAuthentication();
+            app.UseAuthorization();
+
+            app.UseEndpoints(endpoints => {
+                endpoints.MapControllers();
+            });
+
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
@@ -73,13 +109,6 @@ namespace OnlineEducation
             {
                 app.UseDeveloperExceptionPage();
             }
-
-            app.UseRouting();
-
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapDefaultControllerRoute();
-            });
 
             using var serviceScope = app.ApplicationServices.GetRequiredService<IServiceScopeFactory>().CreateScope();
             serviceScope.ServiceProvider.GetService<OnlineEducationDbContext>().Database.EnsureCreated();

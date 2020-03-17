@@ -12,7 +12,9 @@ namespace OnlineEducation.Common
             services.AddTransient<IItemService, ItemService>();
             services.AddTransient<IGroupService, GroupService>();
             services.AddTransient<IItemLessonService, ItemLessonService>();
-            
+            services.AddTransient<IItemGroupService, ItemGroupService>();
+            services.AddScoped<IUserService, UserService>();
+
             return services;
         }
     }

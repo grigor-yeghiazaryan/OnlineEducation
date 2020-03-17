@@ -40,7 +40,7 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpPost("{id}")]
-        public async Task<IActionResult> Edit(int itemId, long id, [FromBody] ItemLesson model)
+        public async Task<IActionResult> Edit(int itemId, int id, [FromBody] ItemLesson model)
         {
             var data = await _itemLessonService.Get(id);
             if (data == null || data.ItemId != itemId)
