@@ -33,7 +33,7 @@ namespace OnlineEducation.Controllers
         [HttpPost]
         public async Task<IActionResult> Add([FromBody] Group model)
         {
-            var data = await _groupService.Update(model);
+            var data = await _groupService.Add(model);
 
             return Ok(data);
         }

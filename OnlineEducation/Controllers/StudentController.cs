@@ -38,7 +38,7 @@ namespace OnlineEducation.Controllers
         public async Task<IActionResult> Add(int groupId, [FromBody] Student model)
         {
             model.GroupId = groupId;
-            model = await _studentService.Update(model);
+            model = await _studentService.Add(model);
 
             return base.Ok(model);
         }

@@ -34,7 +34,7 @@ namespace OnlineEducation.Controllers
         public async Task<IActionResult> Add(int itemId, [FromBody] ItemLesson model)
         {
             model.ItemId = itemId;
-            var data = await _itemLessonService.Update(model);
+            var data = await _itemLessonService.Add(model);
 
             return Ok(data);
         }

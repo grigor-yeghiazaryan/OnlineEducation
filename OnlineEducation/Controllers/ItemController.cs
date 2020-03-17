@@ -33,7 +33,7 @@ namespace OnlineEducation.Controllers
         [HttpPost]
         public async Task<IActionResult> Add([FromBody] Item model)
         {
-            var data = await _itemService.Update(model);
+            var data = await _itemService.Add(model);
 
             return Ok(data);
         }
