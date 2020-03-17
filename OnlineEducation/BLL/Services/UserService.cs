@@ -27,7 +27,7 @@ namespace OnlineEducation.BLL.Services
 
         public override async Task<User> Add(User newModel)
         {
-            newModel.Password = Encrypt(newModel.Password);
+            newModel.Password = Encryptor.Encrypt(newModel.Password);
 
             return await base.Add(newModel);
         }
@@ -75,7 +75,7 @@ namespace OnlineEducation.BLL.Services
             }
             else
             {
-                newModel.Password = Encrypt(newModel.Password);
+                newModel.Password = Encryptor.Encrypt(newModel.Password);
             }
 
             var data = await base.Update(newModel);
@@ -84,11 +84,14 @@ namespace OnlineEducation.BLL.Services
 
         public async Task<User> Authenticate(string email, string password)
         {
-            var data = await base.Get(x => x.Email == email && x.Password == password);
+            var pass = Encryptor.Encrypt(password);
+            var data = await base.Get(x => x.Email == email && x.Password == pass);
             var user = data.SingleOrDefault();
 
             if (user == null)
                 return null;
+
+            var role = user.StudentId == null ? ClaimType.Professor : ClaimType.Student;
 
             // authentication successful so generate jwt token
             var tokenHandler = new JwtSecurityTokenHandler();
@@ -98,7 +101,8 @@ namespace OnlineEducation.BLL.Services
                 Subject = new ClaimsIdentity(new Claim[]
                 {
                     new Claim(ClaimTypes.Name, user.Id.ToString()),
-                    new Claim("StudentId", user.StudentId.ToString())
+                    new Claim("StudentId", user.StudentId.ToString()),
+                    new Claim(ClaimTypes.Role, role.ToString())
                 }),
                 Expires = DateTime.UtcNow.AddDays(7),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -107,17 +111,6 @@ namespace OnlineEducation.BLL.Services
             user.Token = tokenHandler.WriteToken(token);
 
             return user.WithoutPassword();
-        }
-
-        private string Encrypt(string inputString)
-        {
-            if (string.IsNullOrWhiteSpace(inputString))
-                return null;
-
-            byte[] data = System.Text.Encoding.ASCII.GetBytes(inputString);
-            data = new System.Security.Cryptography.SHA256Managed().ComputeHash(data);
-            var hash = System.Text.Encoding.ASCII.GetString(data);
-            return hash;
         }
     }
 }

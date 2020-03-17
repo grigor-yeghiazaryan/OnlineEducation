@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using OnlineEducation.DAL.Entities;
 using OnlineEducation.BLL.Interfaces;
+using OnlineEducation.Common;
 
 namespace OnlineEducation.Controllers
 {
@@ -17,6 +18,7 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpGet]
+        [AuthorizeUser(ClaimType.Student, ClaimType.Professor)]
         public async Task<IActionResult> Get(int itemId)
         {
             var data = await _itemLessonService.Get(x => x.ItemId == itemId);
@@ -24,6 +26,7 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpGet("{id}")]
+        [AuthorizeUser(ClaimType.Student, ClaimType.Professor)]
         public async Task<IActionResult> Get(int itemId, int id)
         {
             var data = await _itemLessonService.Get(id);
@@ -31,6 +34,7 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpPost]
+        [AuthorizeUser(ClaimType.Professor)]
         public async Task<IActionResult> Add(int itemId, [FromBody] ItemLesson model)
         {
             model.ItemId = itemId;
@@ -40,6 +44,7 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpPost("{id}")]
+        [AuthorizeUser(ClaimType.Professor)]
         public async Task<IActionResult> Edit(int itemId, int id, [FromBody] ItemLesson model)
         {
             var data = await _itemLessonService.Get(id);
@@ -52,6 +57,7 @@ namespace OnlineEducation.Controllers
         }
 
         [HttpDelete("{id}")]
+        [AuthorizeUser(ClaimType.Professor)]
         public async Task<IActionResult> Remove(int itemId, int id)
         {
             var data = await _itemLessonService.Get(id);

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using OnlineEducation.Common;
 using OnlineEducation.DAL.Entities;
 
 namespace OnlineEducation.DAL
@@ -45,6 +46,14 @@ namespace OnlineEducation.DAL
             {
                 entity.HasKey(e => e.Id);
                 entity.HasOne(e => e.Item).WithMany(c => c.ItemsLessons);
+            });
+
+            modelBuilder.Entity<User>().HasData(new User
+            {
+                Id = 1,
+                Name = "string",
+                Email = "string",
+                Password = Encryptor.Encrypt("string")
             });
         }
 
