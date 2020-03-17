@@ -1,6 +1,6 @@
 ﻿namespace OnlineEducation.DAL.Entities
 {
-    public class ItemsLesson : IEntity
+    public class ItemLesson : IEntity
     {
         public int Id { get; set; }
         public int ItemId { get; set; }

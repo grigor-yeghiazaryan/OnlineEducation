@@ -32,7 +32,7 @@ namespace OnlineEducation.DAL
                 entity.HasOne(e => e.Item).WithMany(c => c.ItemGroups);
             });
 
-            modelBuilder.Entity<ItemsLesson>(entity =>
+            modelBuilder.Entity<ItemLesson>(entity =>
             {
                 entity.HasKey(e => e.Id);
                 entity.HasOne(e => e.Item).WithMany(c => c.ItemsLessons);
@@ -41,7 +41,7 @@ namespace OnlineEducation.DAL
 
         public virtual DbSet<Group> Groups { get; set; }
         public virtual DbSet<Student> Students { get; set; }
-        public virtual DbSet<ItemsLesson> ItemsLessons { get; set; }
+        public virtual DbSet<ItemLesson> ItemLessons { get; set; }
         public virtual DbSet<ItemGroup> ItemGroups { get; set; }
         public virtual DbSet<Item> Items { get; set; }
     }

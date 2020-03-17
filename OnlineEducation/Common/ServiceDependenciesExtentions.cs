@@ -11,7 +11,8 @@ namespace OnlineEducation.Common
             services.AddTransient<IStudentService, StudentService>();
             services.AddTransient<IItemService, ItemService>();
             services.AddTransient<IGroupService, GroupService>();
-
+            services.AddTransient<IItemLessonService, ItemLessonService>();
+            
             return services;
         }
     }

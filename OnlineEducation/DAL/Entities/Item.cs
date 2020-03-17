@@ -11,7 +11,7 @@ namespace OnlineEducation.DAL.Entities
         public int Course { get; set; }
         public bool IsExam { get; set; }
 
-        public virtual ICollection<ItemsLesson> ItemsLessons { get; set; }
+        public virtual ICollection<ItemLesson> ItemsLessons { get; set; }
         public virtual ICollection<ItemGroup> ItemGroups { get; set; }
     }
 }
