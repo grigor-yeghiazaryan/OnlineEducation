@@ -56,15 +56,13 @@ namespace OnlineEducation.Controllers
             if (student == null || student.GroupId != groupId)
                 return NotFound();
 
-            student.User.Password = model.NewPassword;
-
             var data = await _studentService.Update(student);
 
             return base.Ok(data);
         }
 
         [HttpPost("{id}")]
-        public async Task<IActionResult> Edit(int groupId, int id, [FromBody] StudentModel model)
+        public async Task<IActionResult> Edit(int groupId, int id, [FromBody] Student model)
         {
             var student = await _studentService.Get(id);
 

@@ -12,9 +12,9 @@ namespace OnlineEducation.Controllers
     [Route("api")]
     public class UsersController : ControllerBase
     {
-        private IUserService _userService;
+        private IStudentService _userService;
 
-        public UsersController(IUserService userService)
+        public UsersController(IStudentService userService)
         {
             _userService = userService;
         }

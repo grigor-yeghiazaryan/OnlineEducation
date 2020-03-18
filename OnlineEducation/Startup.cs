@@ -71,23 +71,39 @@ namespace OnlineEducation
             services.AddDbContext<OnlineEducationDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("OnlineEducationDatabase")));
 
+            // Bearer token authentication
+            OpenApiSecurityScheme securityDefinition = new OpenApiSecurityScheme()
+            {
+                Name = "Bearer",
+                BearerFormat = "JWT",
+                Scheme = "bearer",
+                Description = "Specify the authorization token.",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+            };
+
+            // Make sure swagger UI requires a Bearer token specified
+            OpenApiSecurityScheme securityScheme = new OpenApiSecurityScheme()
+            {
+                Reference = new OpenApiReference()
+                {
+                    Id = "jwt_auth",
+                    Type = ReferenceType.SecurityScheme
+                }
+            };
+
+            OpenApiSecurityRequirement securityRequirements = new OpenApiSecurityRequirement()
+            {
+                {securityScheme, new string[] { }},
+            };
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "OnlineEducation API", Version = "v1" });
-
-                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-                {
-                    Name = "Authorization",
-                    Type = SecuritySchemeType.ApiKey,
-                    Scheme = "Bearer",
-                    In = ParameterLocation.Header,
-                    Description = @$"JWT Authorization header using the Bearer scheme. 
-{Environment.NewLine}Enter 'Bearer' [space] and then your token in the text input below.
-{Environment.NewLine}Example: 'Bearer 12345abcdef'",
-                });
+                c.AddSecurityDefinition("jwt_auth", securityDefinition);
+                c.AddSecurityRequirement(securityRequirements);
             });
 
-            //services.AddScoped<ClaimRequirementFilter>();
             services.ConfigureServices();
         }
 
@@ -104,7 +120,8 @@ namespace OnlineEducation
             app.UseAuthentication();
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints => {
+            app.UseEndpoints(endpoints =>
+            {
                 endpoints.MapControllers();
             });
 
@@ -116,7 +133,7 @@ namespace OnlineEducation
 
                 // To deploy on IIS
                 // c.SwaggerEndpoint("/webapi/swagger/v1/swagger.json", "Web API V1");
-        
+
                 c.RoutePrefix = string.Empty;
             });
 

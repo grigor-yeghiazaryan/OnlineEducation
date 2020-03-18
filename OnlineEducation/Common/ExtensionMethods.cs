@@ -6,12 +6,12 @@ namespace OnlineEducation.Common
 {
     public static class ExtensionMethods
     {
-        public static IEnumerable<User> WithoutPasswords(this IEnumerable<User> users)
+        public static IEnumerable<Student> WithoutPasswords(this IEnumerable<Student> users)
         {
             return users.Select(x => x.WithoutPassword());
         }
 
-        public static User WithoutPassword(this User user)
+        public static Student WithoutPassword(this Student user)
         {
             user.Password = null;
             return user;

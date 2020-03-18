@@ -15,13 +15,6 @@ namespace OnlineEducation.DAL
                 entity.HasKey(e => e.Id);
             });
 
-            modelBuilder.Entity<User>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.HasOne(e => e.Student).WithOne(c => c.User)
-                    .HasForeignKey<Student>(b => b.UserId);
-            });
-
             modelBuilder.Entity<Student>(entity =>
             {
                 entity.HasKey(e => e.Id);
@@ -46,17 +39,23 @@ namespace OnlineEducation.DAL
                 entity.HasOne(e => e.Item).WithMany(c => c.ItemsLessons);
             });
 
-            modelBuilder.Entity<User>().HasData(new User
+            modelBuilder.Entity<Group>().HasData(new Group
             {
                 Id = 1,
-                Name = "string",
-                Email = "string",
-                Password = Encryptor.Encrypt("string")
+                GroupName = "Admin"
+            });
+
+            modelBuilder.Entity<Student>().HasData(new Student
+            {
+                Id = 1,
+                Name = "Admin",
+                Email = "Admin",
+                GroupId = 1,
+                Password = Encryptor.Encrypt("Adm1n!")
             });
         }
 
         public virtual DbSet<Group> Groups { get; set; }
-        public virtual DbSet<User> Users { get; set; }
         public virtual DbSet<Student> Students { get; set; }
         public virtual DbSet<ItemLesson> ItemLessons { get; set; }
         public virtual DbSet<ItemGroup> ItemGroups { get; set; }

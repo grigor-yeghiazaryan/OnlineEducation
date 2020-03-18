@@ -1,126 +1,117 @@
 ﻿using System;
+using System.Text;
 using System.Linq;
 using OnlineEducation.DAL;
 using OnlineEducation.Common;
 using System.Threading.Tasks;
+using System.Security.Claims;
 using System.Linq.Expressions;
 using System.Collections.Generic;
 using OnlineEducation.DAL.Entities;
+using Microsoft.Extensions.Options;
 using OnlineEducation.BLL.Interfaces;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
 using Microsoft.EntityFrameworkCore;
-using OnlineEducation.DTO;
 
 namespace OnlineEducation.BLL.Services
 {
     public class StudentService : ServiceBase<Student>, IStudentService
     {
-        private readonly IUserService _userService;
+        private readonly AppSettings _appSettings;
 
-        public StudentService(OnlineEducationDbContext dbContext, IUserService userService) : base(dbContext)
+        public StudentService(OnlineEducationDbContext dbContext,
+            IOptions<AppSettings> appSettings) : base(dbContext)
         {
-            this._userService = userService;
+            this._appSettings = appSettings.Value;
         }
 
-        public async Task<StudentModel> Add(StudentModel newModel)
+        public override async Task<Student> Add(Student newModel)
         {
-            var user = newModel.GetUser();
-            var newUser = await _userService.Add(user);
+            newModel.Password = Encryptor.Encrypt(newModel.Password);
 
-            newModel.UserId = newUser.Id;
-            var newStudent = await base.Add(newModel);
-
-            var studentModel = new StudentModel(newUser.WithoutPassword(), newStudent);
-            return studentModel;
+            return await base.Add(newModel);
         }
 
-        public async Task<StudentModel> Get(int id)
+        public override async Task<Student> Get(int id)
         {
-            var student = await _dbSet
-               .Where(x => x.Id == id)
-               .Include(x => x.User)
-               .SingleOrDefaultAsync();
-
-            return new StudentModel(student.User.WithoutPassword(), student);
+            var data = await base.Get(id);
+            return data.WithoutPassword();
         }
 
-        public async Task<FilterResult<StudentModel>> Get(Expression<Func<Student, bool>> expression, int start, int count)
+        public override async Task<FilterResult<Student>> Get(Expression<Func<Student, bool>> expression, int start, int count)
         {
-            var allCount = await _dbSet.CountAsync(expression);
+            var data = await base.Get(expression, start, count);
 
-            var query = _dbSet
-                .Where(expression)
-                .Include(x => x.User)
-                .OrderByDescending(x => x.Id)
-                .Skip(start).Take(count);
-
-            var entityList = await query.ToListAsync();
-
-            var studentModelList = entityList.Select(x => new StudentModel(x.User.WithoutPassword(), x));
-
-            var filterResult = new FilterResult<StudentModel> { Data = studentModelList, ItemsCount = allCount };
-
-            return filterResult;
-        }
-
-        public async Task<List<StudentModel>> GetAll()
-        {
-            var query = _dbSet.Include(x => x.User);
-
-            var entityList = await query.ToListAsync();
-
-            var studentModelList = entityList.Select(x => new StudentModel(x.User.WithoutPassword(), x)).ToList();
-
-            return studentModelList;
-        }
-
-        public async Task<List<StudentModel>> Get(Expression<Func<Student, bool>> expression)
-        {
-            var query = _dbSet
-                .Where(expression)
-                .Include(x => x.User);
-
-            var entityList = await query.ToListAsync();
-
-            var studentModelList = entityList.Select(x => new StudentModel(x.User.WithoutPassword(), x)).ToList();
-
-            return studentModelList;
-        }
-
-        public async Task<StudentModel> Update(StudentModel newModel)
-        {
-            var user = newModel.GetUser();
-            var newUser = await _userService.Update(user);
-
-            newModel.UserId = newUser.Id;
-            var newStudent = await base.Update(newModel);
-
-            var studentModel = new StudentModel(newUser, newStudent);
-            return studentModel;
-        }
-
-        public async Task<StudentInfoModel> GetFullInfo(int id)
-        {
-            var data = await _dbSet
-                .Where(x => x.Id == id)
-                .Include(x => x.User)
-                .Include(x => x.Group)
-                .FirstOrDefaultAsync();
-
-            var result = new StudentInfoModel
+            foreach (var item in data.Data)
             {
-                Id = data.Id,
-                Name = data.User.Name,
-                Surname = data.User.Surname,
-                Patronymic = data.User.Patronymic,
-                PhoneNumber = data.User.PhoneNumber,
-                Email = data.User.Email,
-                Password = null,// data.User.Password,
-                Token = data.User.Token,
-                GroupName = data.Group.GroupName,
-                EducationalInstitutionType = data.EducationalInstitutionType,
-                Course = data.Course,
+                item.WithoutPassword();
+            }
+
+            return data;
+        }
+
+        public override async Task<List<Student>> GetAll()
+        {
+            var data = await base.GetAll();
+            data.ForEach(x => x.WithoutPassword());
+            return data;
+        }
+
+        public override async Task<List<Student>> Get(Expression<Func<Student, bool>> expression)
+        {
+            var data = await base.Get(expression);
+            data.ForEach(x => x.WithoutPassword());
+            return data;
+        }
+
+        public override async Task<Student> Update(Student newModel)
+        {
+            if (string.IsNullOrWhiteSpace(newModel.Password))
+            {
+                var student = await _dbSet.FindAsync(newModel.Id);
+                if (student == null)
+                    return null;
+                newModel.Password = student.Password;
+            }
+            else
+            {
+                newModel.Password = Encryptor.Encrypt(newModel.Password);
+            }
+
+            var data = await base.Update(newModel);
+            return data;
+        }
+
+        public async Task<Student> Authenticate(string email, string password)
+        {
+            var pass = Encryptor.Encrypt(password);
+
+            var student = await _db.Students.FirstOrDefaultAsync(x => x.Email == email && x.Password == pass);
+
+            if (student == null)
+                return null;
+
+            var role = student.GroupId == 1 ? ClaimType.Professor : ClaimType.Student;
+
+            // authentication successful so generate jwt token
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new Claim[]
+                {
+                    new Claim(ClaimTypes.Name, student.Email),
+                    new Claim("StudentId", student.Id.ToString()),
+                    new Claim(ClaimTypes.Role, role.ToString())
+                }),
+                Expires = DateTime.UtcNow.AddDays(7),
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
-            return result;
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            student.Token = tokenHandler.WriteToken(token);
+
+            return student.WithoutPassword();
         }
 
         public async Task<List<Item>> GetLessans(int id)

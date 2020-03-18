@@ -1,7 +1,5 @@
-﻿using OnlineEducation.DTO;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using OnlineEducation.DAL.Entities;
 using OnlineEducation.BLL.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
@@ -28,7 +26,7 @@ namespace OnlineEducation.Controllers
 
             int.TryParse(someClaim.Value, out int studentId);
 
-            var userInfo = await _studentService.GetFullInfo(studentId);
+            var userInfo = await _studentService.Get(studentId);
             return Ok(userInfo);
         }
 
