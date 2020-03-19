@@ -14,7 +14,7 @@
         public int GroupId { get; set; }
 
         public int? EducationalInstitutionType { get; set; }
-        public int? Course { get; set; }
+        public string Course { get; set; }
 
         public virtual Group Group { get; set; }
     }
