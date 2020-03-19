@@ -7,6 +7,6 @@ namespace OnlineEducation.BLL.Interfaces
     public interface IStudentService : IServiceBase<Student>
     {
         Task<Student> Authenticate(string email, string password);
-        Task<List<Item>> GetLessans(int id);
+        Task<List<ItemModel>> GetLessans(int id);
     }
 }

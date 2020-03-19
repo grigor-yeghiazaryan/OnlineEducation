@@ -114,7 +114,7 @@ namespace OnlineEducation.BLL.Services
             return student.WithoutPassword();
         }
 
-        public async Task<List<Item>> GetLessans(int id)
+        public async Task<List<ItemModel>> GetLessans(int id)
         {
             var group = await _dbSet
                 .Where(x => x.Id == id)
@@ -124,11 +124,29 @@ namespace OnlineEducation.BLL.Services
             if (group == null)
                 return null;
 
-            var items = await _db.ItemGroups
-                .Where(x => x.GroupId == group.Id)
-                .Include(x => x.Item).ThenInclude(x => x.ItemsLessons)
-                .Select(x => x.Item)
-                .ToListAsync();
+            var itemGroups = await _db.ItemGroups
+             .Where(x => x.GroupId == group.Id)
+             .Include(q => q.Item).ThenInclude(w => w.ItemsLessons)
+             .ToListAsync();
+
+            var items = new List<ItemModel>();
+
+            foreach (var itemGroup in itemGroups)
+            {
+                var itemModel = new ItemModel(itemGroup.Item)
+                {
+                    DependencyType = itemGroup.DependencyType
+                };
+
+                items.Add(itemModel);
+            }
+
+            //var items = await _db.ItemGroups
+            //    .Where(x => x.GroupId == group.Id)
+            //    .Include(q => q.Item).ThenInclude(w => w.ItemsLessons)
+            //    .Include(e => e.Item).ThenInclude(r => r.ItemGroups)
+            //    .Select(t => new ItemModel(t.Item))
+            //    .ToListAsync();
 
             return items;
         }
