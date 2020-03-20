@@ -26,7 +26,7 @@ namespace OnlineEducation.Controllers
 
             int.TryParse(someClaim.Value, out int studentId);
 
-            var userInfo = await _studentService.Get(studentId);
+            var userInfo = await _studentService.GetStudentInfo(studentId);
             return Ok(userInfo);
         }
 

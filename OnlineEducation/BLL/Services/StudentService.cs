@@ -13,6 +13,7 @@ using OnlineEducation.BLL.Interfaces;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.EntityFrameworkCore;
+using OnlineEducation.DTO;
 
 namespace OnlineEducation.BLL.Services
 {
@@ -112,6 +113,16 @@ namespace OnlineEducation.BLL.Services
             student.Token = tokenHandler.WriteToken(token);
 
             return student.WithoutPassword();
+        }
+
+        public async Task<StudentInfoModel> GetStudentInfo(int id)
+        {
+            var entity = await _dbSet.Where(x => x.Id == id)
+                .Include(z=>z.Group)
+                .Select(g => new StudentInfoModel(g))
+                .FirstOrDefaultAsync();
+
+            return entity;
         }
 
         public async Task<List<ItemModel>> GetLessans(int id)
